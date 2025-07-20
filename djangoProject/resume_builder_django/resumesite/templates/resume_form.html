@@ -1,0 +1,305 @@
+{% extends 'home.html' %}
+{% load crispy_forms_tags %}
+{% block content %}
+<!-- Theme Toggle Button and CSS Variables -->
+<style>
+:root {
+    --bg-main: #f8f9fa;
+    --bg-card: #fff;
+    --text-main: #212529;
+    --text-muted: #6c757d;
+    --accent-primary: #198754;
+    --accent-secondary: #0d6efd;
+    --border-color: #e9ecef;
+    --section-header-bg: linear-gradient(90deg, #198754 60%, #51cf66 100%);
+    --section-header-text: #fff;
+}
+body.dark-theme {
+    --bg-main: #181a1b;
+    --bg-card: #23272b;
+    --text-main: #f8f9fa;
+    --text-muted: #adb5bd;
+    --accent-primary: #51cf66;
+    --accent-secondary: #4dabf7;
+    --border-color: #343a40;
+    --section-header-bg: linear-gradient(90deg, #51cf66 60%, #198754 100%);
+    --section-header-text: #f8f9fa;
+}
+body.dark-theme input,
+body.dark-theme textarea,
+body.dark-theme select {
+    background: #23272b;
+    color: #f8f9fa;
+    border: 1px solid #343a40;
+}
+body.dark-theme input::placeholder,
+body.dark-theme textarea::placeholder {
+    color: #e0e0e0;
+    opacity: 1;
+}
+body.dark-theme .form-text {
+    color: #e0e0e0 !important;
+}
+.theme-toggle-btn {
+    position: fixed;
+    top: 1.5rem;
+    right: 2rem;
+    z-index: 1000;
+    background: var(--bg-card);
+    color: var(--accent-primary);
+    border: 1px solid var(--border-color);
+    border-radius: 50px;
+    padding: 0.5rem 1.2rem;
+    font-size: 1.1rem;
+    cursor: pointer;
+    box-shadow: 0 2px 8px rgba(25,135,84,0.07);
+    transition: background 0.2s, color 0.2s;
+}
+.theme-toggle-btn:hover {
+    background: var(--accent-primary);
+    color: var(--section-header-text);
+}
+.container.py-5 {
+    padding-top: 2.5rem !important;
+    padding-bottom: 2.5rem !important;
+}
+.card.shadow-lg {
+    background: var(--bg-card);
+    padding: 0.5rem 0.5rem 0.5rem 0.5rem;
+}
+.resume-form-section {
+    margin-bottom: 2.5rem;
+    background: var(--bg-card);
+    border-radius: 12px;
+    box-shadow: 0 2px 8px rgba(25,135,84,0.07);
+    padding: 2.5rem 2rem;
+    border: 1px solid var(--border-color);
+}
+.resume-form-section:not(:last-child) {
+    border-bottom: 2px solid var(--border-color);
+}
+.formset-entry {
+    border: 1px solid var(--border-color);
+    border-radius: 8px;
+    padding: 1rem;
+    margin-bottom: 1.2rem;
+    background: var(--bg-main);
+    transition: box-shadow 0.2s;
+}
+.formset-entry:hover {
+    box-shadow: 0 2px 8px rgba(25,135,84,0.12);
+}
+.formset-label {
+    font-weight: 600;
+    color: var(--accent-primary);
+    margin-bottom: 0.5rem;
+}
+.formset-delete {
+    float: right;
+    color: #dc3545;
+    font-size: 1.2rem;
+    cursor: pointer;
+}
+.section-header {
+    font-size: 1.5rem;
+    color: var(--section-header-text);
+    background: var(--section-header-bg);
+    border-radius: 8px 8px 0 0;
+    padding: 1rem 1.5rem;
+    margin: -2rem -1.5rem 2rem -1.5rem;
+    box-shadow: 0 2px 8px rgba(25,135,84,0.10);
+}
+.form-check-label {
+    color: #dc3545;
+    font-weight: 500;
+}
+.btn-success {
+    background: var(--section-header-bg);
+    border: none;
+}
+.btn-success:hover {
+    background: linear-gradient(90deg, #51cf66 60%, #198754 100%);
+}
+.btn-lg {
+    font-size: 1.2rem;
+    padding: 0.75rem 2.5rem;
+}
+.remove-help {
+    font-size: 0.95rem;
+    color: var(--text-muted);
+    background: #d1ecf1;
+    border-radius: 6px;
+    padding: 0.5rem 1rem;
+    margin-bottom: 1rem;
+    display: inline-block;
+}
+.highlight-uncheck {
+    animation: highlightUncheck 1s;
+}
+@keyframes highlightUncheck {
+    0% { background: #fff3cd; }
+    100% { background: var(--bg-main); }
+}
+@media print {
+    .btn, .resume-form-section { display: none !important; }
+    .container { box-shadow: none !important; }
+}
+body {
+    background: var(--bg-main);
+    color: var(--text-main);
+    transition: background 0.2s, color 0.2s;
+}
+</style>
+<button class="theme-toggle-btn" id="theme-toggle">🌙 Dark Mode</button>
+<div class="container py-5">
+    <div class="card shadow-lg mb-4 border-0">
+        <div class="card-body">
+            <form method="post" novalidate id="resume-form">
+                {% csrf_token %}
+                <div class="resume-form-section">
+                    <div class="section-header"><i class="bi bi-person-circle me-2"></i>Personal Information</div>
+                    {{ form|crispy }}
+                </div>
+                <div class="resume-form-section">
+                    <div class="section-header"><i class="bi bi-briefcase-fill me-2"></i>Professional Experience</div>
+                    <div class="remove-help"><i class="bi bi-info-circle"></i> To remove an entry, check the box labeled <b>Mark for Removal</b>. If you start editing any field, the box will be automatically unchecked.</div>
+                    {{ experience_formset.management_form }}
+                    {% for exp_form in experience_formset %}
+                        <div class="formset-entry">
+                            {% if exp_form.errors %}
+                                <div class="alert alert-danger">{{ exp_form.errors }}</div>
+                            {% endif %}
+                            {% for field in exp_form %}
+                                {% if field.name == 'start_date' or field.name == 'end_date' %}
+                                    <div class="form-group">
+                                        {{ field.label_tag }} {{ field }}
+                                        {% if field.help_text %}
+                                            <small class="form-text text-muted">{{ field.help_text }}</small>
+                                        {% endif %}
+                                        {% if field.errors %}
+                                            <div class="text-danger">{{ field.errors }}</div>
+                                        {% endif %}
+                                    </div>
+                                {% else %}
+                                    {{ field|as_crispy_field }}
+                                {% endif %}
+                            {% endfor %}
+                            {% if experience_formset.can_delete %}
+                                <div class="form-check mt-2">
+                                    {{ exp_form.DELETE }}
+                                    <label class="form-check-label" title="Check to remove this experience entry from your resume.">Mark for Removal</label>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="resume-form-section">
+                    <div class="section-header"><i class="bi bi-mortarboard-fill me-2"></i>Education</div>
+                    <div class="remove-help"><i class="bi bi-info-circle"></i> To remove an entry, check the box labeled <b>Mark for Removal</b>. If you start editing any field, the box will be automatically unchecked.</div>
+                    {{ education_formset.management_form }}
+                    {% for edu_form in education_formset %}
+                        <div class="formset-entry">
+                            {% if edu_form.errors %}
+                                <div class="alert alert-danger">{{ edu_form.errors }}</div>
+                            {% endif %}
+                            {{ edu_form|crispy }}
+                            {% if education_formset.can_delete %}
+                                <div class="form-check mt-2">
+                                    {{ edu_form.DELETE }}
+                                    <label class="form-check-label" title="Check to remove this education entry from your resume.">Mark for Removal</label>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="resume-form-section">
+                    <div class="section-header"><i class="bi bi-stars me-2"></i>Key Skills</div>
+                    <div class="remove-help"><i class="bi bi-info-circle"></i> To remove an entry, check the box labeled <b>Mark for Removal</b>. If you start editing any field, the box will be automatically unchecked.</div>
+                    {{ skill_formset.management_form }}
+                    {% for skill_form in skill_formset %}
+                        <div class="formset-entry">
+                            {% if skill_form.errors %}
+                                <div class="alert alert-danger">{{ skill_form.errors }}</div>
+                            {% endif %}
+                            {{ skill_form|crispy }}
+                            {% if skill_formset.can_delete %}
+                                <div class="form-check mt-2">
+                                    {{ skill_form.DELETE }}
+                                    <label class="form-check-label" title="Check to remove this skill from your resume.">Mark for Removal</label>
+                                </div>
+                            {% endif %}
+                        </div>
+                    {% endfor %}
+                </div>
+                <div class="d-flex justify-content-end mt-4">
+                    <button type="submit" class="btn btn-success btn-lg shadow">Save Resume</button>
+                </div>
+                {% if form.errors %}
+                    <div class="alert alert-danger mt-3">
+                        {{ form.errors }}
+                    </div>
+                {% endif %}
+            </form>
+        </div>
+    </div>
+</div>
+<script src="https://cdn.jsdelivr.net/npm/flatpickr"></script>
+<script>
+// Auto-uncheck Mark for Removal if user edits any field in a formset entry
+function setupAutoUncheck(formsetPrefix) {
+    document.querySelectorAll('.formset-entry').forEach(function(entry) {
+        var checkbox = entry.querySelector('input[type="checkbox"][name*="DELETE"]');
+        if (!checkbox) return;
+        entry.querySelectorAll('input, textarea, select').forEach(function(input) {
+            if (input.type === 'checkbox' && input === checkbox) return;
+            input.addEventListener('input', function() {
+                if (checkbox.checked) {
+                    checkbox.checked = false;
+                    entry.classList.add('highlight-uncheck');
+                    setTimeout(function() { entry.classList.remove('highlight-uncheck'); }, 1000);
+                }
+            });
+        });
+    });
+}
+setupAutoUncheck('experience');
+setupAutoUncheck('education');
+setupAutoUncheck('skill');
+
+// Initialize Flatpickr on all date inputs
+// Wait for DOMContentLoaded to ensure all formset fields are present
+
+document.addEventListener("DOMContentLoaded", function() {
+    document.querySelectorAll('.flatpickr').forEach(function(input) {
+        flatpickr(input, {
+            dateFormat: "Y-m-d",
+            allowInput: true,
+            theme: "bootstrap_green"
+        });
+    });
+});
+
+// Theme toggle logic
+const themeToggleBtn = document.getElementById('theme-toggle');
+function setTheme(dark) {
+    if (dark) {
+        document.body.classList.add('dark-theme');
+        themeToggleBtn.innerHTML = '☀️ Light Mode';
+        localStorage.setItem('theme', 'dark');
+    } else {
+        document.body.classList.remove('dark-theme');
+        themeToggleBtn.innerHTML = '🌙 Dark Mode';
+        localStorage.setItem('theme', 'light');
+    }
+}
+themeToggleBtn.addEventListener('click', function() {
+    setTheme(!document.body.classList.contains('dark-theme'));
+});
+// On load, set theme from localStorage
+if (localStorage.getItem('theme') === 'dark') {
+    setTheme(true);
+} else {
+    setTheme(false);
+}
+</script>
+{% endblock %} 
